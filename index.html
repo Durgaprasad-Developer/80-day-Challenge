@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>80 Days — Discipline System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  :root{
+    --bg:#0d1117;
+    --surface:#161b22;
+    --border:#30363d;
+    --primary:#00ff88;
+    --secondary:#26a641;
+    --text:#e6edf3;
+    --muted:#8b949e;
+    --red:#ff4d4d;
+    --yellow:#ffd93d;
+    --font:'Space Grotesk',sans-serif;
+    --mono:'JetBrains Mono',monospace;
+  }
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font);
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+
+  /* ── NAV ── */
+  .nav{
+    display:flex;
+    border-bottom:1px solid var(--border);
+    background:var(--bg);
+    position:sticky;
+    top:0;
+    z-index:100;
+  }
+  .nav-btn{
+    flex:1;
+    padding:14px;
+    background:none;
+    border:none;
+    color:var(--muted);
+    font-family:var(--font);
+    font-size:13px;
+    font-weight:600;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition:all .2s;
+    border-bottom:2px solid transparent;
+  }
+  .nav-btn.active{color:var(--primary);border-bottom-color:var(--primary);}
+  .nav-btn:hover:not(.active){color:var(--text);}
+
+  /* ── PAGES ── */
+  .page{display:none;padding:24px 20px;max-width:480px;margin:0 auto;}
+  .page.active{display:block;}
+
+  /* ── LOGIN ── */
+  #login-page{
+    max-width:360px;
+    margin:0 auto;
+    min-height:100vh;
+    display:none;
+    flex-direction:column;
+    justify-content:center;
+    padding:32px 20px;
+  }
+  .login-logo{text-align:center;margin-bottom:40px;}
+  .login-logo .big-num{
+    font-size:72px;
+    font-weight:700;
+    line-height:1;
+    color:var(--primary);
+    font-family:var(--mono);
+    text-shadow:0 0 40px rgba(0,255,136,.25);
+  }
+  .login-logo .tagline{
+    font-size:11px;
+    letter-spacing:.22em;
+    color:var(--muted);
+    text-transform:uppercase;
+    margin-top:10px;
+  }
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block;
+    font-size:11px;
+    letter-spacing:.12em;
+    color:var(--muted);
+    text-transform:uppercase;
+    margin-bottom:8px;
+  }
+  .field input{
+    width:100%;
+    background:var(--surface);
+    border:1px solid var(--border);
+    color:var(--text);
+    font-family:var(--font);
+    font-size:15px;
+    padding:12px 14px;
+    border-radius:8px;
+    outline:none;
+    transition:border-color .2s;
+  }
+  .field input:focus{border-color:var(--primary);}
+  .btn-primary{
+    width:100%;
+    background:var(--primary);
+    color:#000;
+    border:none;
+    padding:14px;
+    border-radius:8px;
+    font-family:var(--font);
+    font-size:15px;
+    font-weight:700;
+    cursor:pointer;
+    letter-spacing:.05em;
+    transition:all .2s;
+    margin-top:8px;
+  }
+  .btn-primary:hover{box-shadow:0 0 24px rgba(0,255,136,.4);}
+  .login-err{
+    color:#ff6b6b;
+    font-size:13px;
+    margin-top:12px;
+    text-align:center;
+    min-height:18px;
+  }
+
+  /* ── APP WRAPPER ── */
+  #app{display:none;}
+  #app.shown{display:block;}
+
+  /* ── CHARACTER ── */
+  .char-wrap{text-align:center;padding:24px 0 8px;}
+  .char-stage{
+    width:110px;
+    height:110px;
+    margin:0 auto;
+    background:var(--surface);
+    border-radius:20px;
+    border:1px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .char-emoji{
+    font-size:60px;
+    line-height:1;
+    transition:transform .3s;
+    display:block;
+  }
+  .char-stage-label{
+    font-size:11px;
+    letter-spacing:.14em;
+    color:var(--primary);
+    text-transform:uppercase;
+    margin-top:10px;
+    font-family:var(--mono);
+  }
+  .char-stage-name{font-size:13px;color:var(--muted);margin-top:2px;}
+
+  /* ── DAY HEADER ── */
+  .day-header{margin:20px 0 0;}
+  .day-label{
+    font-size:11px;
+    letter-spacing:.15em;
+    color:var(--muted);
+    text-transform:uppercase;
+    margin-bottom:6px;
+  }
+  .day-num-big{
+    font-size:52px;
+    font-weight:700;
+    line-height:1;
+    font-family:var(--mono);
+  }
+  .day-num-big span{color:var(--muted);font-size:28px;font-weight:400;}
+  .streak-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:100px;
+    padding:8px 16px;
+    margin-top:12px;
+  }
+  .streak-fire{font-size:16px;}
+  .streak-count{
+    font-family:var(--mono);
+    font-size:17px;
+    font-weight:700;
+    color:var(--primary);
+  }
+  .streak-label{font-size:12px;color:var(--muted);letter-spacing:.05em;}
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap{
+    background:var(--border);
+    border-radius:100px;
+    height:5px;
+    margin:20px 0 24px;
+    overflow:hidden;
+  }
+  .progress-fill{
+    height:100%;
+    border-radius:100px;
+    background:linear-gradient(to right,#ff4d4d,#ffd93d,#00ff88);
+    transition:width .6s ease;
+  }
+
+  /* ── CHECKLIST ITEMS ── */
+  .check-item{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:18px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    cursor:pointer;
+    transition:all .2s;
+    margin-bottom:12px;
+    user-select:none;
+  }
+  .check-item:hover{border-color:var(--muted);}
+  .check-item.checked{
+    border-color:var(--secondary);
+    background:#0d2318;
+  }
+  .check-box{
+    width:24px;
+    height:24px;
+    border-radius:6px;
+    border:2px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    transition:all .2s;
+    font-size:14px;
+    color:#000;
+  }
+  .check-item.checked .check-box{
+    background:var(--primary);
+    border-color:var(--primary);
+  }
+  .check-mark{opacity:0;transition:opacity .15s;}
+  .check-item.checked .check-mark{opacity:1;}
+  .check-label{flex:1;}
+  .check-title{font-size:16px;font-weight:600;color:var(--text);transition:color .2s;}
+  .check-sub{font-size:12px;color:var(--muted);margin-top:2px;}
+  .check-item.checked .check-title{color:var(--primary);}
+
+  /* ── COMPLETE BUTTON ── */
+  .complete-btn{
+    width:100%;
+    background:var(--primary);
+    color:#000;
+    border:none;
+    padding:16px;
+    border-radius:12px;
+    font-family:var(--font);
+    font-size:16px;
+    font-weight:700;
+    cursor:pointer;
+    letter-spacing:.06em;
+    transition:all .25s;
+    margin-top:8px;
+  }
+  .complete-btn:disabled{
+    background:var(--surface);
+    color:var(--muted);
+    border:1px solid var(--border);
+    cursor:not-allowed;
+    box-shadow:none;
+  }
+  .complete-btn:not(:disabled):hover{
+    box-shadow:0 0 28px rgba(0,255,136,.5);
+  }
+  .complete-btn.done{
+    background:#0d2318 !important;
+    color:var(--primary) !important;
+    border:1px solid var(--secondary) !important;
+    cursor:default !important;
+    box-shadow:none !important;
+  }
+
+  /* ── XP TOAST ── */
+  .xp-toast{
+    position:fixed;
+    bottom:36px;
+    left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--primary);
+    color:#000;
+    padding:12px 28px;
+    border-radius:100px;
+    font-weight:700;
+    font-size:14px;
+    letter-spacing:.06em;
+    opacity:0;
+    transition:all .35s cubic-bezier(.34,1.56,.64,1);
+    pointer-events:none;
+    z-index:9999;
+    white-space:nowrap;
+    font-family:var(--font);
+  }
+  .xp-toast.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+
+  /* ── SCREEN FLASH ── */
+  .flash{
+    position:fixed;
+    inset:0;
+    background:rgba(0,255,136,.06);
+    opacity:0;
+    pointer-events:none;
+    z-index:9998;
+    transition:opacity .3s;
+  }
+  .flash.pop{opacity:1;}
+
+  /* ── DASHBOARD ── */
+  .dash-section{margin-bottom:28px;}
+  .section-label{
+    font-size:11px;
+    letter-spacing:.15em;
+    color:var(--muted);
+    text-transform:uppercase;
+    margin-bottom:12px;
+    font-family:var(--mono);
+  }
+  .streak-big{
+    font-size:44px;
+    font-weight:700;
+    font-family:var(--mono);
+    color:var(--primary);
+    text-shadow:0 0 32px rgba(0,255,136,.28);
+    line-height:1.1;
+  }
+  .streak-big-sub{
+    font-size:12px;
+    color:var(--muted);
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    margin-top:4px;
+  }
+
+  /* ── HEATMAP ── */
+  .heatmap-grid{
+    display:grid;
+    grid-template-columns:repeat(13,1fr);
+    gap:4px;
+  }
+  .hm-cell{
+    aspect-ratio:1;
+    border-radius:3px;
+    background:#0e1821;
+    transition:background .3s;
+    cursor:default;
+  }
+  .hm-cell.done{background:var(--secondary);}
+  .hm-cell.today{outline:2px solid var(--primary);outline-offset:1px;}
+  .hm-legend{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    margin-top:10px;
+    justify-content:flex-end;
+  }
+  .hm-legend-label{font-size:11px;color:var(--muted);}
+  .hm-legend-cell{
+    width:12px;height:12px;border-radius:2px;
+  }
+
+  /* ── XP CARD ── */
+  .xp-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:18px;
+  }
+  .xp-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:12px;
+  }
+  .xp-level{
+    font-size:22px;
+    font-weight:700;
+    font-family:var(--mono);
+    color:var(--primary);
+  }
+  .xp-total{font-size:13px;color:var(--muted);}
+  .xp-bar-wrap{
+    background:var(--border);
+    border-radius:100px;
+    height:6px;
+    overflow:hidden;
+  }
+  .xp-bar-fill{
+    height:100%;
+    background:linear-gradient(to right,var(--secondary),var(--primary));
+    border-radius:100px;
+    transition:width .6s ease;
+  }
+
+  /* ── STATS ── */
+  .stats-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .stat-card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:18px;
+  }
+  .stat-val{
+    font-size:32px;
+    font-weight:700;
+    font-family:var(--mono);
+    color:var(--text);
+    line-height:1;
+  }
+  .stat-key{
+    font-size:11px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    margin-top:6px;
+  }
+
+  /* ── BADGES ── */
+  .badges-grid{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:12px;
+  }
+  .badge-item{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+  }
+  .badge-circle{
+    width:52px;
+    height:52px;
+    border-radius:50%;
+    background:var(--surface);
+    border:2px solid var(--border);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:22px;
+    transition:all .3s;
+    opacity:.35;
+  }
+  .badge-circle.unlocked{
+    border-color:var(--primary);
+    box-shadow:0 0 16px rgba(0,255,136,.3);
+    opacity:1;
+  }
+  .badge-day{
+    font-size:10px;
+    color:var(--muted);
+    font-family:var(--mono);
+  }
+  .badge-name{
+    font-size:9px;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    text-align:center;
+  }
+  .badge-name.unlocked{color:var(--primary);}
+</style>
+</head>
+<body>
+
+<!-- ── LOGIN PAGE ── -->
+<div id="login-page">
+  <div class="login-logo">
+    <div class="big-num">80</div>
+    <div class="tagline">Days of Discipline</div>
+  </div>
+  <div class="field">
+    <label>Username</label>
+    <input type="text" id="username" placeholder="Enter username" autocomplete="off">
+  </div>
+  <div class="field">
+    <label>Password</label>
+    <input type="password" id="password" placeholder="Enter password">
+  </div>
+  <button class="btn-primary" id="login-btn">ENTER THE SYSTEM</button>
+  <div class="login-err" id="login-err"></div>
+</div>
+
+<!-- ── APP ── -->
+<div id="app">
+  <nav class="nav">
+    <button class="nav-btn active" data-page="checklist">Today</button>
+    <button class="nav-btn" data-page="dashboard">Dashboard</button>
+  </nav>
+
+  <!-- CHECKLIST PAGE -->
+  <div class="page active" id="checklist-page">
+    <div class="char-wrap">
+      <div class="char-stage">
+        <span class="char-emoji" id="char-emoji">🧑</span>
+      </div>
+      <div class="char-stage-label" id="char-stage-label">Stage 1</div>
+      <div class="char-stage-name" id="char-stage-name">The Beginning</div>
+    </div>
+
+    <div class="day-header">
+      <div class="day-label">Current Day</div>
+      <div class="day-num-big" id="day-display">01 <span>/ 80</span></div>
+      <div class="streak-badge">
+        <span class="streak-fire">🔥</span>
+        <span class="streak-count" id="streak-count">0</span>
+        <span class="streak-label">day streak</span>
+      </div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-fill" id="progress-bar" style="width:0%"></div>
+    </div>
+
+    <div class="check-item" id="item-rl">
+      <div class="check-box"><span class="check-mark">✓</span></div>
+      <div class="check-label">
+        <div class="check-title">RL Practice</div>
+        <div class="check-sub">Reinforcement Learning — stay consistent</div>
+      </div>
+    </div>
+
+    <div class="check-item" id="item-pu">
+      <div class="check-box"><span class="check-mark">✓</span></div>
+      <div class="check-label">
+        <div class="check-title" id="pushup-label">21 Pushups</div>
+        <div class="check-sub">1 set — no excuses, every day</div>
+      </div>
+    </div>
+
+    <button class="complete-btn" id="complete-btn" disabled>COMPLETE DAY</button>
+  </div>
+
+  <!-- DASHBOARD PAGE -->
+  <div class="page" id="dashboard-page">
+
+    <div class="dash-section">
+      <div class="section-label">Streak</div>
+      <div class="streak-big">🔥 <span id="dash-streak">0</span></div>
+      <div class="streak-big-sub">Days Consecutive</div>
+    </div>
+
+    <div class="dash-section">
+      <div class="section-label">Overall Progress</div>
+      <div class="progress-wrap" style="height:8px;margin-bottom:8px;">
+        <div class="progress-fill" id="dash-progress-bar" style="width:0%"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;">
+        <span style="font-size:12px;color:var(--muted);font-family:var(--mono);" id="dash-day-label">Day 1</span>
+        <span style="font-size:12px;color:var(--muted);font-family:var(--mono);">Day 80</span>
+      </div>
+    </div>
+
+    <div class="dash-section">
+      <div class="section-label">Level &amp; XP</div>
+      <div class="xp-card">
+        <div class="xp-row">
+          <span class="xp-level" id="xp-level">LVL 1</span>
+          <span class="xp-total"><span id="xp-total">0</span> XP total</span>
+        </div>
+        <div class="xp-bar-wrap">
+          <div class="xp-bar-fill" id="xp-bar" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-section">
+      <div class="section-label">Stats</div>
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-val" id="stat-done">0</div>
+          <div class="stat-key">Days Done</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-val" id="stat-pushups">0</div>
+          <div class="stat-key">Total Pushups</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-section">
+      <div class="section-label">80-Day Heatmap</div>
+      <div class="heatmap-grid" id="heatmap"></div>
+      <div class="hm-legend">
+        <span class="hm-legend-label">No activity</span>
+        <div class="hm-legend-cell" style="background:#0e1821;border:1px solid var(--border);"></div>
+        <div class="hm-legend-cell" style="background:var(--secondary);"></div>
+        <span class="hm-legend-label">Done</span>
+      </div>
+    </div>
+
+    <div class="dash-section">
+      <div class="section-label">Milestones</div>
+      <div class="badges-grid" id="badges-grid"></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- XP Toast -->
+<div class="xp-toast" id="xp-toast">+10 XP &nbsp;·&nbsp; DISCIPLINE BUILT</div>
+<div class="flash" id="flash"></div>
+
+<script>
+/* ── CONSTANTS ── */
+const START_DATE = new Date('2026-05-05T00:00:00');
+const TOTAL_DAYS = 80;
+const CREDS = { u: 'dp', p: 'winwithdiscipline' };
+
+const STAGES = [
+  { emoji: '😤', label: 'Stage 1', name: 'The Beginning' },
+  { emoji: '💪', label: 'Stage 2', name: 'Awakening' },
+  { emoji: '🏋️', label: 'Stage 3', name: 'Consistency' },
+  { emoji: '⚡', label: 'Stage 4', name: 'Discipline' },
+  { emoji: '🔥', label: 'Stage 5', name: 'ELITE' },
+];
+
+const MILESTONES = [
+  { day: 10, name: 'Bronze', emoji: '🥉' },
+  { day: 20, name: 'Silver', emoji: '🥈' },
+  { day: 30, name: 'Gold',   emoji: '🥇' },
+  { day: 50, name: 'Warrior',emoji: '⚡' },
+  { day: 80, name: 'Legend', emoji: '👑' },
+];
+
+/* ── HELPERS ── */
+function getDayNumber() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const start = new Date(START_DATE); start.setHours(0,0,0,0);
+  const diff = Math.round((today - start) / 86400000);
+  return Math.max(1, Math.min(diff + 1, TOTAL_DAYS));
+}
+
+function getPushups(day) {
+  return Math.round(21 + ((100 - 21) / 79) * (day - 1));
+}
+
+function dateKey(date) {
+  const d = date || new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function getData() {
+  try { return JSON.parse(localStorage.getItem('discipline_data') || '{"progress":{}}'); }
+  catch(e) { return { progress: {} }; }
+}
+
+function saveData(d) {
+  localStorage.setItem('discipline_data', JSON.stringify(d));
+}
+
+function getXP() {
+  return parseInt(localStorage.getItem('discipline_xp') || '0');
+}
+
+function addXP() {
+  const xp = getXP() + 10;
+  localStorage.setItem('discipline_xp', String(xp));
+  return xp;
+}
+
+function getStreak() {
+  const progress = getData().progress || {};
+  let streak = 0;
+  const today = new Date();
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+  
+  let startD = today;
+  if (!progress[dateKey(today)]?.done && progress[dateKey(yesterday)]?.done) {
+    startD = yesterday;
+  }
+  
+  for (let i = 0; i < TOTAL_DAYS; i++) {
+    const d = new Date(startD); d.setDate(d.getDate() - i);
+    if (progress[dateKey(d)]?.done) streak++;
+    else break;
+  }
+  return streak;
+}
+
+function getStage(day) {
+  if (day > 60) return STAGES[4];
+  if (day > 40) return STAGES[3];
+  if (day > 20) return STAGES[2];
+  if (day > 10) return STAGES[1];
+  return STAGES[0];
+}
+
+function isLoggedIn() {
+  return localStorage.getItem('disc_auth') === '1';
+}
+
+/* ── STATE ── */
+let rlChecked = false;
+let puChecked = false;
+let dayDone = false;
+
+/* ── RENDER CHECKLIST ── */
+function renderChecklist() {
+  const day = getDayNumber();
+  const pushups = getPushups(day);
+  const streak = getStreak();
+  const data = getData();
+  const today = dateKey();
+  dayDone = !!(data.progress[today]?.done);
+
+  document.getElementById('day-display').innerHTML = `${String(day).padStart(2,'0')} <span>/ 80</span>`;
+  document.getElementById('streak-count').textContent = streak;
+  document.getElementById('pushup-label').textContent = `${pushups} Pushups`;
+  document.getElementById('progress-bar').style.width = `${(day / TOTAL_DAYS) * 100}%`;
+
+  const stage = getStage(day);
+  document.getElementById('char-emoji').textContent = stage.emoji;
+  document.getElementById('char-stage-label').textContent = stage.label;
+  document.getElementById('char-stage-name').textContent = stage.name;
+
+  if (dayDone) {
+    rlChecked = true; puChecked = true;
+    document.getElementById('item-rl').classList.add('checked');
+    document.getElementById('item-pu').classList.add('checked');
+    const btn = document.getElementById('complete-btn');
+    btn.textContent = '✓ DAY COMPLETE';
+    btn.classList.add('done');
+    btn.disabled = true;
+  } else {
+    rlChecked = false; puChecked = false;
+    document.getElementById('item-rl').classList.remove('checked');
+    document.getElementById('item-pu').classList.remove('checked');
+    const btn = document.getElementById('complete-btn');
+    btn.textContent = 'COMPLETE DAY';
+    btn.classList.remove('done');
+    btn.disabled = true;
+  }
+}
+
+/* ── RENDER DASHBOARD ── */
+function renderDashboard() {
+  const day = getDayNumber();
+  const streak = getStreak();
+  const data = getData().progress || {};
+  const xp = getXP();
+
+  document.getElementById('dash-streak').textContent = streak;
+  document.getElementById('dash-progress-bar').style.width = `${(day / TOTAL_DAYS) * 100}%`;
+  document.getElementById('dash-day-label').textContent = `Day ${day}`;
+
+  const level = Math.floor(xp / 100) + 1;
+  const levelXP = xp % 100;
+  document.getElementById('xp-level').textContent = `LVL ${level}`;
+  document.getElementById('xp-total').textContent = xp;
+  document.getElementById('xp-bar').style.width = `${levelXP}%`;
+
+  // Stats
+  let doneDays = 0, totalPushups = 0;
+  for (let i = 0; i < TOTAL_DAYS; i++) {
+    const d = new Date(START_DATE); d.setDate(d.getDate() + i);
+    const key = dateKey(d);
+    if (data[key]?.done) {
+      doneDays++;
+      totalPushups += getPushups(i + 1);
+    }
+  }
+  document.getElementById('stat-done').textContent = doneDays;
+  document.getElementById('stat-pushups').textContent = totalPushups;
+
+  // Heatmap
+  const hm = document.getElementById('heatmap');
+  hm.innerHTML = '';
+  const todayKey = dateKey();
+  for (let i = 0; i < TOTAL_DAYS; i++) {
+    const d = new Date(START_DATE); d.setDate(d.getDate() + i);
+    const key = dateKey(d);
+    const cell = document.createElement('div');
+    cell.className = 'hm-cell';
+    if (data[key]?.done) cell.classList.add('done');
+    if (key === todayKey) cell.classList.add('today');
+    cell.title = `Day ${i + 1}  (${key})`;
+    hm.appendChild(cell);
+  }
+
+  // Milestones / Badges
+  const bg = document.getElementById('badges-grid');
+  bg.innerHTML = '';
+  MILESTONES.forEach(m => {
+    const reached = doneDays >= m.day;
+    bg.innerHTML += `
+      <div class="badge-item">
+        <div class="badge-circle${reached ? ' unlocked' : ''}">${m.emoji}</div>
+        <div class="badge-day">Day ${m.day}</div>
+        <div class="badge-name${reached ? ' unlocked' : ''}">${m.name}</div>
+      </div>`;
+  });
+}
+
+/* ── LOGIN ── */
+document.getElementById('login-btn').addEventListener('click', () => {
+  const u = document.getElementById('username').value.trim();
+  const p = document.getElementById('password').value;
+  if (u === CREDS.u && p === CREDS.p) {
+    localStorage.setItem('disc_auth', '1');
+    showApp();
+  } else {
+    const err = document.getElementById('login-err');
+    err.textContent = 'Wrong credentials. Try again.';
+    setTimeout(() => err.textContent = '', 2500);
+  }
+});
+
+document.getElementById('username').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('password').focus();
+});
+document.getElementById('password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('login-btn').click();
+});
+
+/* ── NAV ── */
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.page + '-page').classList.add('active');
+    if (btn.dataset.page === 'dashboard') renderDashboard();
+  });
+});
+
+/* ── CHECKLIST INTERACTIONS ── */
+document.getElementById('item-rl').addEventListener('click', () => {
+  if (dayDone) return;
+  rlChecked = !rlChecked;
+  document.getElementById('item-rl').classList.toggle('checked', rlChecked);
+  document.getElementById('complete-btn').disabled = !(rlChecked && puChecked);
+});
+
+document.getElementById('item-pu').addEventListener('click', () => {
+  if (dayDone) return;
+  puChecked = !puChecked;
+  document.getElementById('item-pu').classList.toggle('checked', puChecked);
+  document.getElementById('complete-btn').disabled = !(rlChecked && puChecked);
+});
+
+/* ── COMPLETE DAY ── */
+document.getElementById('complete-btn').addEventListener('click', () => {
+  if (dayDone) return;
+
+  const data = getData();
+  data.progress = data.progress || {};
+  data.progress[dateKey()] = { done: true, rl: true, pushups: true, ts: Date.now() };
+  saveData(data);
+  addXP();
+  dayDone = true;
+  document.getElementById('streak-count').textContent = getStreak();
+
+  // Screen flash
+  const flash = document.getElementById('flash');
+  flash.classList.add('pop');
+  setTimeout(() => flash.classList.remove('pop'), 400);
+
+  // XP Toast
+  const toast = document.getElementById('xp-toast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2400);
+
+  // Button state
+  const btn = document.getElementById('complete-btn');
+  btn.textContent = '✓ DAY COMPLETE';
+  btn.classList.add('done');
+  btn.disabled = true;
+
+  // Character pulse
+  const emoji = document.getElementById('char-emoji');
+  emoji.style.transform = 'scale(1.25)';
+  setTimeout(() => emoji.style.transform = 'scale(1)', 450);
+});
+
+/* ── INIT ── */
+function showApp() {
+  document.getElementById('login-page').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  renderChecklist();
+}
+
+if (isLoggedIn()) {
+  showApp();
+} else {
+  document.getElementById('login-page').style.display = 'flex';
+}
+</script>
+</body>
+</html>
