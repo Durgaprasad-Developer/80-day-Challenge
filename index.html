@@ -717,6 +717,21 @@ let rlChecked = false;
 let puChecked = false;
 let dayDone = false;
 
+function updatePartialState() {
+  const data = getData();
+  data.progress = data.progress || {};
+  const today = dateKey();
+  
+  data.progress[today] = {
+    ...(data.progress[today] || {}),
+    rl: rlChecked,
+    pushups: puChecked,
+    done: data.progress[today]?.done || false
+  };
+  
+  saveData(data);
+}
+
 /* ── RENDER CHECKLIST ── */
 function renderChecklist() {
   const day = getDayNumber();
@@ -736,22 +751,52 @@ function renderChecklist() {
   document.getElementById('char-stage-label').textContent = stage.label;
   document.getElementById('char-stage-name').textContent = stage.name;
 
+  const todayData = data.progress[today] || {};
+
   if (dayDone) {
     rlChecked = true; puChecked = true;
     document.getElementById('item-rl').classList.add('checked');
     document.getElementById('item-pu').classList.add('checked');
     const btn = document.getElementById('complete-btn');
-    btn.textContent = '✓ DAY COMPLETE';
+    btn.textContent = '✓ DAY COMPLETE — COME BACK TOMORROW';
     btn.classList.add('done');
     btn.disabled = true;
+    
+    document.getElementById('checklist-page').style.opacity = '0.85';
+    document.getElementById('checklist-page').style.filter = 'grayscale(0.1)';
+    
+    if (!document.getElementById('wait-msg')) {
+      const msg = document.createElement('div');
+      msg.id = 'wait-msg';
+      msg.textContent = "You showed up today. Come back tomorrow.";
+      msg.style.color = "var(--muted)";
+      msg.style.fontSize = "12px";
+      msg.style.textAlign = "center";
+      msg.style.marginTop = "10px";
+      btn.after(msg);
+    }
   } else {
-    rlChecked = false; puChecked = false;
-    document.getElementById('item-rl').classList.remove('checked');
-    document.getElementById('item-pu').classList.remove('checked');
+    rlChecked = !!todayData.rl;
+    puChecked = !!todayData.pushups;
+    document.getElementById('item-rl').classList.toggle('checked', rlChecked);
+    document.getElementById('item-pu').classList.toggle('checked', puChecked);
     const btn = document.getElementById('complete-btn');
     btn.textContent = 'COMPLETE DAY';
     btn.classList.remove('done');
-    btn.disabled = true;
+    btn.disabled = !(rlChecked && puChecked);
+    
+    document.getElementById('checklist-page').style.opacity = '1';
+    document.getElementById('checklist-page').style.filter = 'none';
+    const waitMsg = document.getElementById('wait-msg');
+    if (waitMsg) waitMsg.remove();
+    
+    const todayDate = new Date(); todayDate.setHours(0,0,0,0);
+    const startD = new Date(START_DATE); startD.setHours(0,0,0,0);
+    const dateDiff = Math.round((todayDate - startD) / 86400000);
+    if (dateDiff + 1 > TOTAL_DAYS) {
+      btn.textContent = 'CHALLENGE COMPLETE';
+      btn.disabled = true;
+    }
   }
 }
 
@@ -851,6 +896,7 @@ document.getElementById('item-rl').addEventListener('click', () => {
   if (dayDone) return;
   rlChecked = !rlChecked;
   document.getElementById('item-rl').classList.toggle('checked', rlChecked);
+  updatePartialState();
   document.getElementById('complete-btn').disabled = !(rlChecked && puChecked);
 });
 
@@ -858,6 +904,7 @@ document.getElementById('item-pu').addEventListener('click', () => {
   if (dayDone) return;
   puChecked = !puChecked;
   document.getElementById('item-pu').classList.toggle('checked', puChecked);
+  updatePartialState();
   document.getElementById('complete-btn').disabled = !(rlChecked && puChecked);
 });
 
@@ -885,9 +932,23 @@ document.getElementById('complete-btn').addEventListener('click', () => {
 
   // Button state
   const btn = document.getElementById('complete-btn');
-  btn.textContent = '✓ DAY COMPLETE';
+  btn.textContent = '✓ DAY COMPLETE — COME BACK TOMORROW';
   btn.classList.add('done');
   btn.disabled = true;
+
+  document.getElementById('checklist-page').style.opacity = '0.85';
+  document.getElementById('checklist-page').style.filter = 'grayscale(0.1)';
+
+  if (!document.getElementById('wait-msg')) {
+    const msg = document.createElement('div');
+    msg.id = 'wait-msg';
+    msg.textContent = "You showed up today. Come back tomorrow.";
+    msg.style.color = "var(--muted)";
+    msg.style.fontSize = "12px";
+    msg.style.textAlign = "center";
+    msg.style.marginTop = "10px";
+    btn.after(msg);
+  }
 
   // Character pulse
   const emoji = document.getElementById('char-emoji');
